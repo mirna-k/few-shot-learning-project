@@ -1,0 +1,102 @@
+{
+    "Alces alces": {
+        "label": 0,
+        "cro_name": "Los",
+        "description": "Los je najveći član porodice jelena, prepoznatljiv po svojim velikim, širokim rogovima. Živi u šumovitim područjima sjeverne Europe, Azije i Sjeverne Amerike."
+    },
+    "Alouatta seniculus": {
+        "label": 1,
+        "cro_name": "Crvena hurma",
+        "description": "Crvena hurma je vrsta majmuna koja živi u kišnim šumama Južne Amerike."
+      },
+    "Anolis carolinensis": {
+        "label": 2,
+        "cro_name": "Zelena anolisa",
+        "description": "Zelena anolisa je mali gušter poznat po svojoj sposobnosti mijenjanja boje iz zelene u smeđu. Živi u jugoistočnim dijelovima Sjedinjenih Američkih Država."
+    },
+    "Anolis sagrei": {
+        "label": 3,
+        "cro_name": "Smeđa anolisa",
+        "description": "Smeđa anolisa je invazivni gušter porijeklom s Bahama i Kube, sada raširen u jugoistočnim dijelovima SAD-a. Prepoznatljiva je po smeđoj boji i sposobnosti brzog kretanja."
+    },
+    "Arctocephalus fosteri": {
+        "label": 4,
+        "cro_name": "Australijski morski medvjed",
+        "description": "Australijski morski medvjed je vrsta ušatog tuljana koji živi u obalnim vodama Australije i Novog Zelanda."
+    },
+    "Ardea herodias": {
+        "label": 5,
+        "cro_name": "Velika plava čaplja",
+        "description": "Velika plava čaplja je velika ptica močvarica prepoznatljiva po svojoj sivo-plavoj boji i dugim nogama. Živi uz obale i močvare širom Sjeverne Amerike."
+    },
+    "Blarina brevicauda": {
+        "label": 6,
+        "cro_name": "Kratkorepa rovka",
+        "description": "Kratkorepa rovka je mala sisavac iz porodice rovki, poznata po svojim otrovnim žlijezdama koje koristi za lov na plijen. Nalazi se u šumama i poljima Sjeverne Amerike."
+    },
+    "Bradypus variegatus": {
+        "label": 7,
+        "cro_name": "Smeđi ljenivac",
+        "description": "Smeđi ljenivac je sporopokretna životinja koja živi u tropskim šumama Srednje i Južne Amerike."
+    },
+    "Cebus imitator": {
+        "label": 8,
+        "cro_name": "Bijeloliki kapucin",
+        "description": "Bijeloliki kapucin je vrsta majmuna poznata po svojoj inteligenciji i upotrebi alata. Živi u šumama Srednje Amerike."
+    },
+    "Clethrionomys glareolus": {
+        "label": 9,
+        "cro_name": "Šumska voluharica",
+        "description": "Šumska voluharica je mala glodavica koja živi u šumama i živicama Europe i Azije. Poznata je po svojoj sposobnosti brzog razmnožavanja i stvaranja kompleksnih mreža podzemnih tunela."
+    },
+    "Crocuta crocuta": {
+        "label": 10,
+        "cro_name": "Pjegava hijena",
+        "description": "Pjegava hijena je velika vrsta hijene koja živi u subsaharskoj Africi."
+    },
+    "Fratercula arctica": {
+        "label": 11,
+        "cro_name": "Atlantski puffin",
+        "description": "Atlantski puffin je morska ptica prepoznatljiva po svojoj šarenoj kljunu i crno-bijelom perju. Gnijezdi se na obalama sjevernog Atlantika."
+    },
+    "Icterus cucullatus": {
+        "label": 12,
+        "cro_name": "Hooded oriole",
+        "description": "Hooded oriole je ptica jarkih boja koja se nalazi u Srednjoj Americi i dijelovima SAD-a. Poznata je po svom pjevu i ljupkim gnijezdima koja gradi na drveću."
+    },
+    "Leopardus pardalis": {
+        "label": 13,
+        "cro_name": "Ocelot",
+        "description": "Ocelot je vrsta divlje mačke koja živi u tropskim šumama Srednje i Južne Amerike."
+    },
+    "Martes martes": {
+        "label": 14,
+        "cro_name": "Kuna zlatica",
+        "description": "Kuna zlatica je član porodice kuna, poznata po svom dugom tijelu i debelom krznu. Živi u šumama Europe i Azije te je cijenjena zbog svog krzna."
+    },
+    "Oreamnos americanus": {
+        "label": 15,
+        "cro_name": "Planinska koza",
+        "description": "Planinska koza je vrsta papkara koja živi u planinskim područjima Sjeverne Amerike."
+    },
+    "Passerina ciris": {
+        "label": 16,
+        "cro_name": "Painted bunting",
+        "description": "Painted bunting je mala ptica poznata po svom živopisnom perju koje uključuje plavu, crvenu i zelenu boju. Nalazi se u Sjevernoj Americi, uglavnom u gustim šikarama i poljima."
+    },
+    "Phacochoerus africanus": {
+        "label": 17,
+        "cro_name": "Afrička bradavičasta svinja",
+        "description": "Afrička bradavičasta svinja je vrsta divlje svinje koja živi u subsaharskoj Africi."
+    },
+    "Vicugna vicugna": {
+        "label": 18,
+        "cro_name": "Vikuna",
+        "description": "Vikuna je vrsta južnoameričke deve koja živi u Andama."
+    },
+    "Vulpes macrotis": {
+        "label": 19,
+        "cro_name": "Kratkouha lisica",
+        "description": "Kratkouha lisica je vrsta lisice koja živi u pustinjskim područjima Sjeverne Amerike."
+    }
+}
