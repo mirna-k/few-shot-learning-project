@@ -14,6 +14,7 @@ from tqdm.notebook import tqdm
 from abc import abstractmethod
 from torchvision import transforms
 from collections import defaultdict
+from sklearn.metrics import confusion_matrix
 from torch.utils.data import Sampler, Dataset, DataLoader
 from typing import Dict, List, Tuple, Union, Iterator, Callable, Optional, Set
 
@@ -522,7 +523,8 @@ class PrototypicalNetworks(FewShotClassifier):
     
 
 # expanded to calculate loss, precision and recall
-def evaluate_on_one_task(model, loss_module, support_images: Tensor, support_labels: Tensor, query_images: Tensor, query_labels: Tensor) -> Tuple[int, int, float, dict, dict, dict]:
+def evaluate_on_one_task(model, loss_module, support_images: torch.Tensor, support_labels: torch.Tensor, query_images: torch.Tensor, query_labels: torch.Tensor
+                         ) -> Tuple[int, int, float, Dict[int, int], Dict[int, int], Dict[int, int], List[int], List[int]]:
     """
     Returns the number of correct predictions of query labels, the total number of
     predictions, and per-class true positives, false positives, and false negatives.
@@ -542,17 +544,22 @@ def evaluate_on_one_task(model, loss_module, support_images: Tensor, support_lab
     false_positives = defaultdict(int)
     false_negatives = defaultdict(int)
 
-    for true_label, pred_label in zip(query_labels, pred_labels):
-        if true_label == pred_label:
-            true_positives[true_label.item()] += 1
-        else:
-            false_positives[pred_label.item()] += 1
-            false_negatives[true_label.item()] += 1
+    true_labels_list = query_labels.tolist()
+    pred_labels_list = pred_labels.tolist()
 
-    return correct_predictions, total_predictions, eval_loss, true_positives, false_positives, false_negatives
+    for true_label, pred_label in zip(true_labels_list, pred_labels_list):
+        if true_label == pred_label:
+            true_positives[true_label] += 1
+        else:
+            false_positives[pred_label] += 1
+            false_negatives[true_label] += 1
+
+    return correct_predictions, total_predictions, eval_loss, true_positives, false_positives, false_negatives, true_labels_list, pred_labels_list
+
 
 # expanded to calculate loss, precision, recall and f1
-def evaluate(model, loss_module, data_loader: DataLoader, device: str = "cuda", use_tqdm: bool = True, tqdm_prefix=None) -> Tuple[float, float, float, float, float]:
+def evaluate(model, loss_module, data_loader: DataLoader, device: str = "cuda", use_tqdm: bool = True, tqdm_prefix=None
+             ) -> Tuple[float, float, float, float, float, np.ndarray]:
     """
     Evaluate the model on few-shot classification tasks.
     Args:
@@ -570,12 +577,14 @@ def evaluate(model, loss_module, data_loader: DataLoader, device: str = "cuda", 
     all_false_positives = defaultdict(int)
     all_false_negatives = defaultdict(int)
     eval_loss = 0.0
+    all_true_labels = []
+    all_pred_labels = []
 
     model.eval()
     with torch.no_grad():
         with tqdm(enumerate(data_loader), total=len(data_loader), disable=not use_tqdm, desc=tqdm_prefix) as tqdm_eval:
             for _, (support_images, support_labels, query_images, query_labels, _) in tqdm_eval:
-                correct, total, task_loss, true_positives, false_positives, false_negatives = evaluate_on_one_task(
+                correct, total, task_loss, true_positives, false_positives, false_negatives, true_labels, pred_labels = evaluate_on_one_task(
                     model, 
                     loss_module,
                     support_images.to(device), 
@@ -586,6 +595,9 @@ def evaluate(model, loss_module, data_loader: DataLoader, device: str = "cuda", 
                 total_predictions += total
                 correct_predictions += correct
                 eval_loss += task_loss
+
+                all_true_labels.extend(true_labels)
+                all_pred_labels.extend(pred_labels)
 
                 for label in true_positives.keys():
                     all_true_positives[label] += true_positives[label]
@@ -613,9 +625,12 @@ def evaluate(model, loss_module, data_loader: DataLoader, device: str = "cuda", 
     macro_precision = sum(precision_per_class.values()) / len(precision_per_class)
     macro_recall = sum(recall_per_class.values()) / len(recall_per_class)
     accuracy = correct_predictions / total_predictions
-    f1 = (2 * macro_precision * macro_recall) / macro_precision * macro_recall
+    f1 = (2 * macro_precision * macro_recall) / (macro_precision + macro_recall) if (macro_precision + macro_recall) > 0 else 0
 
-    return accuracy, eval_loss, macro_precision, macro_recall, f1
+    # Compute the confusion matrix
+    cm = confusion_matrix(all_true_labels, all_pred_labels)
+
+    return accuracy, eval_loss, macro_precision, macro_recall, f1, cm
 
 
 IMAGENET_NORMALIZATION = {"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}
