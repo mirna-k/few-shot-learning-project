@@ -1,21 +1,24 @@
+import json
+import torch
 import random
 import warnings
-import pandas as pd
 import numpy as np
-import torch
+import pandas as pd
 import torch.nn as nn
-from torch.utils.data import Sampler, Dataset, DataLoader
-from typing import Dict, List, Tuple, Union, Iterator
-from abc import abstractmethod
-from numpy import ndarray
-from torch import Tensor
-from collections import defaultdict
 
+from PIL import Image
+from torch import Tensor
+from pathlib import Path
+from numpy import ndarray
 from tqdm.notebook import tqdm
+from abc import abstractmethod
+from torchvision import transforms
+from collections import defaultdict
+from torch.utils.data import Sampler, Dataset, DataLoader
+from typing import Dict, List, Tuple, Union, Iterator, Callable, Optional, Set
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 print("Device", device)
-
 
 """
     EasyFSL helper
@@ -51,8 +54,6 @@ def predict_embeddings(dataloader: DataLoader, model: nn.Module, device = None,)
 
     return pd.DataFrame({"embedding": list(concatenated_embeddings), "class_name": all_class_names})
 
-
-""" Few Shot Dataset """
 
 class FewShotDataset(Dataset):
     """
@@ -174,8 +175,6 @@ class FeaturesDataset(FewShotDataset):
     def number_of_classes(self):
         return len(self.class_names)
 
-
-""" Task Sampler """
 
 GENERIC_TYPING_ERROR_MESSAGE = (
     "Check out the output's type of your dataset's __getitem__() method."
@@ -502,7 +501,6 @@ class PrototypicalNetworks(FewShotClassifier):
     computes the mean of support features for each class (called prototypes), and predict
     classification scores for query images based on their euclidean distance to the prototypes.
     """
-
     def forward(self, query_images: Tensor) -> Tensor:
         """
         Overrides forward method of FewShotClassifier.
@@ -523,8 +521,8 @@ class PrototypicalNetworks(FewShotClassifier):
         return False
     
 
-# expanded to calculate precision and recall
-def evaluate_on_one_task(model, support_images: Tensor, support_labels: Tensor, query_images: Tensor, query_labels: Tensor) -> Tuple[int, int, dict, dict, dict]:
+# expanded to calculate loss, precision and recall
+def evaluate_on_one_task(model, loss_module, support_images: Tensor, support_labels: Tensor, query_images: Tensor, query_labels: Tensor) -> Tuple[int, int, float, dict, dict, dict]:
     """
     Returns the number of correct predictions of query labels, the total number of
     predictions, and per-class true positives, false positives, and false negatives.
@@ -532,6 +530,10 @@ def evaluate_on_one_task(model, support_images: Tensor, support_labels: Tensor, 
     model.process_support_set(support_images, support_labels)
     predictions = model(query_images).detach().data
     pred_labels = torch.max(predictions, 1)[1]
+
+    loss = loss_module(predictions, query_labels.to(device))
+
+    eval_loss = loss.item() * len(support_images)
 
     correct_predictions = int((pred_labels == query_labels).sum().item())
     total_predictions = len(query_labels)
@@ -547,10 +549,10 @@ def evaluate_on_one_task(model, support_images: Tensor, support_labels: Tensor, 
             false_positives[pred_label.item()] += 1
             false_negatives[true_label.item()] += 1
 
-    return correct_predictions, total_predictions, true_positives, false_positives, false_negatives
+    return correct_predictions, total_predictions, eval_loss, true_positives, false_positives, false_negatives
 
-
-def evaluate(model, data_loader: DataLoader, device: str = "cuda", use_tqdm: bool = True, tqdm_prefix=None) -> Tuple[float, float, float]:
+# expanded to calculate loss, precision, recall and f1
+def evaluate(model, loss_module, data_loader: DataLoader, device: str = "cuda", use_tqdm: bool = True, tqdm_prefix=None) -> Tuple[float, float, float, float, float]:
     """
     Evaluate the model on few-shot classification tasks.
     Args:
@@ -560,28 +562,30 @@ def evaluate(model, data_loader: DataLoader, device: str = "cuda", use_tqdm: boo
         use_tqdm: whether to display the evaluation's progress bar
         tqdm_prefix: prefix of the tqdm bar
     Returns:
-        average classification accuracy, macro-averaged precision, macro-averaged recall
+        average classification accuracy, loss, macro-averaged precision, macro-averaged recall, f1 score
     """
     total_predictions = 0
     correct_predictions = 0
     all_true_positives = defaultdict(int)
     all_false_positives = defaultdict(int)
     all_false_negatives = defaultdict(int)
+    eval_loss = 0.0
 
     model.eval()
     with torch.no_grad():
         with tqdm(enumerate(data_loader), total=len(data_loader), disable=not use_tqdm, desc=tqdm_prefix) as tqdm_eval:
             for _, (support_images, support_labels, query_images, query_labels, _) in tqdm_eval:
-                correct, total, true_positives, false_positives, false_negatives = evaluate_on_one_task(
+                correct, total, task_loss, true_positives, false_positives, false_negatives = evaluate_on_one_task(
                     model, 
+                    loss_module,
                     support_images.to(device), 
                     support_labels.to(device), 
                     query_images.to(device), 
                     query_labels.to(device)
                 )
-
                 total_predictions += total
                 correct_predictions += correct
+                eval_loss += task_loss
 
                 for label in true_positives.keys():
                     all_true_positives[label] += true_positives[label]
@@ -593,7 +597,8 @@ def evaluate(model, data_loader: DataLoader, device: str = "cuda", use_tqdm: boo
                 # Log accuracy in real time
                 tqdm_eval.set_postfix(accuracy=correct_predictions / total_predictions)
 
-    # Calculate precision and recall for each class
+            eval_loss /= len(data_loader.dataset)
+
     precision_per_class = {}
     recall_per_class = {}
     for label in all_true_positives.keys():
@@ -605,9 +610,217 @@ def evaluate(model, data_loader: DataLoader, device: str = "cuda", use_tqdm: boo
         precision_per_class[label] = precision
         recall_per_class[label] = recall
 
-    # Calculate macro-averaged precision and recall
     macro_precision = sum(precision_per_class.values()) / len(precision_per_class)
     macro_recall = sum(recall_per_class.values()) / len(recall_per_class)
     accuracy = correct_predictions / total_predictions
+    f1 = (2 * macro_precision * macro_recall) / macro_precision * macro_recall
 
-    return accuracy, macro_precision, macro_recall
+    return accuracy, eval_loss, macro_precision, macro_recall, f1
+
+
+IMAGENET_NORMALIZATION = {"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}
+DEFAULT_IMAGE_FORMATS = {".bmp", ".png", ".jpeg", ".jpg"}
+def default_transform(image_size: int, training: bool) -> Callable:
+    """
+    Create a composition of torchvision transformations, with some randomization if we are
+        building a training set.
+    Args:
+        image_size: size of dataset images
+        training: whether this is a training set or not
+
+    Returns:
+        compositions of torchvision transformations
+    """
+    return (
+        transforms.Compose(
+            [
+                transforms.RandomResizedCrop(image_size),
+                transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(**IMAGENET_NORMALIZATION),
+            ]
+        )
+        if training
+        else transforms.Compose(
+            [
+                transforms.Resize([int(image_size * 1.15), int(image_size * 1.15)]),
+                transforms.CenterCrop(image_size),
+                transforms.ToTensor(),
+                transforms.Normalize(**IMAGENET_NORMALIZATION),
+            ]
+        )
+    )
+
+class EasySet(FewShotDataset):
+    """
+    A ready-to-use dataset. Will work for any dataset where the images are
+    grouped in directories by class. It expects a JSON file defining the
+    classes and where to find them. It must have the following shape:
+        {
+            "class_names": [
+                "class_1",
+                "class_2"
+            ],
+            "class_roots": [
+                "path/to/class_1_folder",
+                "path/to/class_2_folder"
+            ]
+        }
+    """
+    def __init__(
+        self,
+        specs_file: Union[Path, str],
+        image_size: int = 84,
+        transform: Optional[Callable] = None,
+        training: bool = False,
+        supported_formats: Optional[Set[str]] = None,
+    ):
+        """
+        Args:
+            specs_file: path to the JSON file
+            image_size: images returned by the dataset will be square images of the given size
+            transform: torchvision transforms to be applied to images. If none is provided,
+                we use some standard transformations including ImageNet normalization.
+                These default transformations depend on the "training" argument.
+            training: preprocessing is slightly different for a training set, adding a random
+                cropping and a random horizontal flip. Only used if transforms = None.
+            supported_formats: set of allowed file format. When listing data instances, EasySet
+                will only consider these files. If none is provided, we use the default set of
+                image formats.
+        """
+        specs = self.load_specs(Path(specs_file))
+
+        self.images, self.labels = self.list_data_instances(
+            specs["class_roots"], supported_formats=supported_formats
+        )
+
+        self.class_names = specs["class_names"]
+
+        self.transform = (
+            transform if transform else default_transform(image_size, training)
+        )
+
+    @staticmethod
+    def load_specs(specs_file: Path) -> dict:
+        """
+        Load specs from a JSON file.
+        Args:
+            specs_file: path to the JSON file
+
+        Returns:
+            dictionary contained in the JSON file
+
+        Raises:
+            ValueError: if specs_file is not a JSON, or if it is a JSON and the content is not
+                of the expected shape.
+        """
+
+        if specs_file.suffix != ".json":
+            raise ValueError("EasySet requires specs in a JSON file.")
+
+        with open(specs_file, "r", encoding="utf-8") as file:
+            specs = json.load(file)
+
+        if "class_names" not in specs.keys() or "class_roots" not in specs.keys():
+            raise ValueError(
+                "EasySet requires specs in a JSON file with the keys class_names and class_roots."
+            )
+
+        if len(specs["class_names"]) != len(specs["class_roots"]):
+            raise ValueError(
+                "Number of class names does not match the number of class root directories."
+            )
+
+        return specs
+
+    @staticmethod
+    def list_data_instances(
+        class_roots: List[str], supported_formats: Optional[Set[str]] = None
+    ) -> Tuple[List[str], List[int]]:
+        """
+        Explore the directories specified in class_roots to find all data instances.
+        Args:
+            class_roots: each element is the path to the directory containing the elements
+                of one class
+            supported_formats: set of allowed file format. When listing data instances, EasySet
+                will only consider these files. If none is provided, we use the default set of
+                image formats.
+
+        Returns:
+            list of paths to the images, and a list of same length containing the integer label
+                of each image
+        """
+        if supported_formats is None:
+            supported_formats = DEFAULT_IMAGE_FORMATS
+
+        images = []
+        labels = []
+        for class_id, class_root in enumerate(class_roots):
+            class_images = [
+                str(image_path)
+                for image_path in sorted(Path(class_root).glob("*"))
+                if image_path.is_file()
+                & (image_path.suffix.lower() in supported_formats)
+            ]
+
+            images += class_images
+            labels += len(class_images) * [class_id]
+
+        if len(images) == 0:
+            warnings.warn(
+                UserWarning(
+                    "No images found in the specified directories. The dataset will be empty."
+                )
+            )
+
+        return images, labels
+
+    def __getitem__(self, item: int):
+        """
+        Get a data sample from its integer id.
+        Args:
+            item: sample's integer id
+
+        Returns:
+            data sample in the form of a tuple (image, label), where label is an integer.
+            The type of the image object depends of the output type of self.transform. By default
+            it's a torch.Tensor, however you are free to define any function as self.transform, and
+            therefore any type for the output image. For instance, if self.transform = lambda x: x,
+            then the output image will be of type PIL.Image.Image.
+        """
+        # Some images of ILSVRC2015 are grayscale, so we convert everything to RGB for consistence.
+        # If you want to work on grayscale images, use torch.transforms.Grayscale in your
+        # transformation pipeline.
+        img = self.transform(Image.open(self.images[item]).convert("RGB"))
+        label = self.labels[item]
+
+        return img, label
+
+    def __len__(self) -> int:
+        return len(self.labels)
+
+    def get_labels(self) -> List[int]:
+        return self.labels
+
+    def number_of_classes(self):
+        return len(self.class_names)
+
+CUB_SPECS_DIR = Path("CUB_json_files")
+
+class CUB(EasySet):
+    def __init__(self, split: str, **kwargs):
+        """
+        Build the CUB dataset for the specific split.
+        Args:
+            split: one of the available split (typically train, val, test).
+        Raises:
+            ValueError: if the specified split cannot be associated with a JSON spec file
+                from CUB's specs directory
+        """
+        specs_file = CUB_SPECS_DIR / f"{split}.json"
+        if not specs_file.is_file():
+            raise ValueError(
+                f"Could not find specs file {specs_file.name} in {CUB_SPECS_DIR}"
+            )
+        super().__init__(specs_file=specs_file, **kwargs)
