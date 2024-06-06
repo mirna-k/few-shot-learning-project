@@ -1,0 +1,102 @@
+{
+    "Anthurium": {
+        "label": 0,
+        "cro_name": "Anturij",
+        "description": "Anthurium je poznat pod nazivima flamingov cvijet jer svojim izgledom podsjeća na ovu pticu, plamenac zbog česte vatrene boje cvijeta."
+    },
+    "Clemantis": {
+        "label": 1,
+        "cro_name": "Klematis",
+        "description": "Klematis je penjačica s predivnim cvjetovima raznih boja i oblika, često se koristi za prekrivanje ograda i zidova."
+    },
+    "Dahlia": {
+        "label": 2,
+        "cro_name": "Dahlia",
+        "description": "Dahlia je cvijet s velikim i raskošnim cvjetovima koji dolaze u različitim bojama i veličinama, simbolizira eleganciju i dostojanstvo."
+    },
+    "Fritillaria": {
+        "label": 3,
+        "cro_name": "Fritilaria",
+        "description": "Fritilaria je rod biljaka koje se prepoznaju po svojim visećim, zvonolikim cvjetovima, često su prošarani karakterističnim uzorcima."
+    },
+    "Gazania": {
+        "label": 4,
+        "cro_name": "Gazania",
+        "description": "Gazania je poznata po svojim svijetlim, šarenim cvjetovima koji se otvaraju na suncu, često se koristi u uređenju vrtova."
+    },
+    "Geranium": {
+        "label": 5,
+        "cro_name": "Geranij",
+        "description": "Geranij je popularna vrtna biljka poznata po svojim mirisnim listovima i raznobojnim cvjetovima koji cvatu tijekom ljeta."
+    },
+    "Gerber": {
+        "label": 6,
+        "cro_name": "Gerber",
+        "description": "Gerber je cvijet koji simbolizira radost i sreću, dolazi u širokom spektru boja i često se koristi u buketima i aranžmanima."
+    },
+    "Gladiolus": {
+        "label": 7,
+        "cro_name": "Gladiola",
+        "description": "Gladiola je visoka biljka s dugim klasovima cvjetova, često se koristi u vrtovima i cvjetnim aranžmanima zbog svog impozantnog izgleda."
+    },
+    "Hibiskus": {
+        "label": 8,
+        "cro_name": "Hibiskus",
+        "description": "Hibiskus je tropska biljka s velikim, šarenim cvjetovima koja simbolizira delikatnu ljepotu i egzotiku."
+    },
+    "Karanfil": {
+        "label": 9,
+        "cro_name": "Karanfil",
+        "description": "Karanfil je cvijet koji simbolizira ljubav i odanost, dolazi u različitim bojama i često se koristi u cvjetnim aranžmanima."
+    },
+    "Lotos": {
+        "label": 10,
+        "cro_name": "Lotos",
+        "description": "Lotos je vodena biljka koja simbolizira čistoću i prosvjetljenje, poznata po svojim prekrasnim cvjetovima koji plutaju na površini vode."
+    },
+    "Monarda": {
+        "label": 11,
+        "cro_name": "Monarda",
+        "description": "Monarda je biljka poznata po svojim aromatičnim listovima i cvjetovima koji privlače pčele i leptire, često se koristi u čajevima i kao ukrasna biljka."
+    },
+    "Nasturtium": {
+        "label": 12,
+        "cro_name": "Dragoljub",
+        "description": "Dragoljub je biljka s jestivim cvjetovima i listovima, poznata po svojim živopisnim bojama i začinskom okusu."
+    },
+    "Nerine": {
+        "label": 13,
+        "cro_name": "Nerina",
+        "description": "Nerina je biljka s predivnim, zvonastim cvjetovima koji cvjetaju u jesen, često se koristi u cvjetnim aranžmanima."
+    },
+    "Passiflora": {
+        "label": 14,
+        "cro_name": "Pasiflora",
+        "description": "Pasiflora, poznata i kao cvijet strasti, ima egzotične cvjetove i simbolizira strast i duhovnost."
+    },
+    "Petunia": {
+        "label": 15,
+        "cro_name": "Petunija",
+        "description": "Petunija je popularna vrtna biljka poznata po svojim velikim i šarenim cvjetovima, često se koristi u visećim košarama i cvjetnim gredicama."
+    },
+    "Plumeria": {
+        "label": 16,
+        "cro_name": "Plumerija",
+        "description": "Plumerija je tropska biljka poznata po svojim mirisnim cvjetovima koji se često koriste u cvjetnim vijencima i kao ukras."
+    },
+    "Rose": {
+        "label": 17,
+        "cro_name": "Ruža",
+        "description": "Ruža je simbol ljubavi i ljepote, dolazi u mnogim bojama i vrstama, često se koristi u buketima i vrtovima."
+    },
+    "Strelicija": {
+        "label": 18,
+        "cro_name": "Strelitzia",
+        "description": "Strelitzia, poznata i kao rajska ptica, ima prepoznatljive cvjetove koji podsjećaju na egzotične ptice, simbolizira raj i slobodu."
+    },
+    "Zijevalica": {
+        "label": 19,
+        "cro_name": "Zijevalica",
+        "description": "Zijevalica, poznata i kao lavlji ždrijel, ima cvjetove koji se otvaraju i zatvaraju poput usta, dolazi u različitim bojama i oblicima."
+    }
+}
